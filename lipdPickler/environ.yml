@@ -6,3 +6,4 @@ dependencies:
   - pip:
       - lipd==0.2.8.9
       - cloudpickle==2.2.1
+      - pandas
