@@ -1,0 +1,10 @@
+[1] "browsing userRecons for local data"
+[1] "updated TSIDmd5!"
+[1] "updating compilation metadata"
+Error in file(file, ifelse(append, "a", "w")) : 
+  cannot open the connection
+Calls: write -> cat -> file
+In addition: Warning message:
+In file(file, ifelse(append, "a", "w")) :
+  cannot open file 'C:/users/dce25/Downloads/compilationMetadata.json': No such file or directory
+Execution halted
