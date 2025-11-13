@@ -392,7 +392,7 @@ var downloadEm = async function(uniqueID, language, format){
 	const path1111 = path.join(userDir1, 'archivedComp.json')
 	const exists1111 = await checkFileExistsSync(path1111)
 
-	if (process.argv.length == 4){
+	if (process.argv.length >= 4){
 
 		if (exists1111){
 			console.log('found request for archived compilation: ' + path1111)
