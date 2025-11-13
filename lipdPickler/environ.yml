@@ -3,6 +3,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
+  - python=3.10
   - pip:
       - lipd==0.2.8.9
       - cloudpickle==2.2.1
