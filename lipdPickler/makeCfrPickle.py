@@ -22,7 +22,7 @@ print(f"Created DataFrame with shape: {df.shape}")
 print(f"Columns: {list(df.columns)}")
 
 # Save as cfr-compatible pickle
-output_file = '/lipd_cfr.pkl'
+output_file = '/output/lipd_cfr.pkl'
 with open(output_file, 'wb') as f:
     pickle.dump(df, f, protocol=4)  # Use protocol 4 for Python 3.4+ compatibility
 
@@ -32,7 +32,7 @@ print(f"Successfully saved cfr-compatible pickle to {output_file}")
 all_data = {}
 all_data['D'] = D
 
-traditional_file = '/lipd.pkl'
+traditional_file = '/output/lipd.pkl'
 with open(traditional_file, 'wb') as f:
     pickle.dump(all_data, f, protocol=2)
 
