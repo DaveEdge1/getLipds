@@ -34,10 +34,32 @@ if 'archiveType' in df.columns:
     df = df.dropna(subset=['archiveType'])
     print(f"Total dropped after archiveType filter: {initial_count - len(df)} records")
 
+# Handle paleoData_pages2kID - fill with unique identifier if missing
+# Not all datasets are from PAGES2k, so we create a fallback ID
+if 'paleoData_pages2kID' in df.columns:
+    missing_id_count = df['paleoData_pages2kID'].isna().sum()
+    if missing_id_count > 0:
+        print(f"Found {missing_id_count} records missing paleoData_pages2kID, creating fallback IDs")
+        # Use paleoData_TSid or create unique identifier for records without PAGES2k ID
+        if 'paleoData_TSid' in df.columns:
+            df['paleoData_pages2kID'] = df['paleoData_pages2kID'].fillna(df['paleoData_TSid'])
+        else:
+            # Create sequential IDs if TSid also missing
+            mask = df['paleoData_pages2kID'].isna()
+            df.loc[mask, 'paleoData_pages2kID'] = ['unknown_' + str(i) for i in range(mask.sum())]
+else:
+    # Column doesn't exist, create it from TSid or sequential IDs
+    print("paleoData_pages2kID column missing, creating from paleoData_TSid")
+    if 'paleoData_TSid' in df.columns:
+        df['paleoData_pages2kID'] = df['paleoData_TSid']
+    else:
+        df['paleoData_pages2kID'] = ['unknown_' + str(i) for i in range(len(df))]
+
 # Ensure remaining string columns are proper strings
 string_columns = [
     'paleoData_proxy', 'archiveType', 'dataSetName',
-    'paleoData_variableName', 'paleoData_units', 'yearUnits'
+    'paleoData_variableName', 'paleoData_units', 'yearUnits',
+    'paleoData_pages2kID'
 ]
 
 for col in string_columns:
