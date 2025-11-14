@@ -23,30 +23,23 @@ print(f"Columns: {list(df.columns)}")
 
 initial_count = len(df)
 
-# Filter to only proxy measurements (exclude age/year/depth columns)
-# These auxiliary columns won't have proxy types, but that's expected
-if 'paleoData_variableName' in df.columns:
-    # Keep only records that are NOT age/year/depth measurements
-    auxiliary_vars = ['age', 'year', 'depth']
-    is_proxy = ~df['paleoData_variableName'].isin(auxiliary_vars)
-    df = df[is_proxy].copy()
-    print(f"Filtered to proxy measurements only: kept {len(df)} of {initial_count} time series")
-    print(f"(Removed {initial_count - len(df)} auxiliary time series like age/year/depth)")
-
-# Now check for datasets with missing critical metadata
 # Group by dataset to identify problematic datasets
 dataset_col = 'dataSetName' if 'dataSetName' in df.columns else 'datasetId'
 
 if dataset_col in df.columns:
     # Identify datasets missing proxy type or archive type
+    # Only check non-auxiliary variables (age/year/depth are expected to lack proxy type)
     datasets_missing_proxy = set()
     datasets_missing_archive = set()
 
-    if 'paleoData_proxy' in df.columns:
-        # Find datasets where ALL proxy measurements lack proxy type
+    if 'paleoData_proxy' in df.columns and 'paleoData_variableName' in df.columns:
+        # Find datasets where ALL non-auxiliary measurements lack proxy type
         for dataset in df[dataset_col].unique():
-            dataset_records = df[df[dataset_col] == dataset]
-            if dataset_records['paleoData_proxy'].isna().all():
+            dataset_records = df[df[dataset_col] == dataset].copy()
+            # Filter to only proxy variables (not age/year/depth)
+            auxiliary_vars = ['age', 'year', 'depth']
+            proxy_records = dataset_records[~dataset_records['paleoData_variableName'].isin(auxiliary_vars)]
+            if len(proxy_records) > 0 and proxy_records['paleoData_proxy'].isna().all():
                 datasets_missing_proxy.add(dataset)
 
     if 'archiveType' in df.columns:
@@ -63,8 +56,11 @@ if dataset_col in df.columns:
         print(f"\nDropping {len(datasets_to_drop)} datasets due to missing critical metadata:")
         print(f"  - {len(datasets_missing_proxy)} datasets missing proxy type")
         print(f"  - {len(datasets_missing_archive)} datasets missing archive type")
+        print(f"\nDatasets being dropped:")
+        for ds in sorted(datasets_to_drop):
+            print(f"  - {ds}")
         df = df[~df[dataset_col].isin(datasets_to_drop)].copy()
-        print(f"Remaining: {len(df)} time series from {df[dataset_col].nunique()} datasets")
+        print(f"\nRemaining: {len(df)} time series from {df[dataset_col].nunique()} datasets")
 
 # Fill missing proxy/archive types from other records in the same dataset
 # (Sometimes one time series in a dataset has the info, others don't)
@@ -74,26 +70,43 @@ if dataset_col in df.columns:
             # Forward fill within each dataset group
             df[col] = df.groupby(dataset_col)[col].transform(lambda x: x.ffill().bfill())
 
-# Handle paleoData_pages2kID - fill with unique identifier if missing
-# Not all datasets are from PAGES2k, so we create a fallback ID
-if 'paleoData_pages2kID' in df.columns:
-    missing_id_count = df['paleoData_pages2kID'].isna().sum()
-    if missing_id_count > 0:
-        print(f"\nFound {missing_id_count} records missing paleoData_pages2kID, creating fallback IDs")
-        # Use paleoData_TSid or create unique identifier for records without PAGES2k ID
-        if 'paleoData_TSid' in df.columns:
-            df['paleoData_pages2kID'] = df['paleoData_pages2kID'].fillna(df['paleoData_TSid'])
-        else:
-            # Create sequential IDs if TSid also missing
-            mask = df['paleoData_pages2kID'].isna()
-            df.loc[mask, 'paleoData_pages2kID'] = ['unknown_' + str(i) for i in range(mask.sum())]
-else:
-    # Column doesn't exist, create it from TSid or sequential IDs
-    print("\npaleoData_pages2kID column missing, creating from paleoData_TSid")
-    if 'paleoData_TSid' in df.columns:
-        df['paleoData_pages2kID'] = df['paleoData_TSid']
+# Handle paleoData_pages2kID at the DATASET level (not individual time series)
+# One unique ID per dataset, not per time series
+if dataset_col in df.columns:
+    if 'paleoData_pages2kID' in df.columns:
+        # Get one pages2kID per dataset (using the first non-null value from each dataset)
+        dataset_pages2k_map = df.groupby(dataset_col)['paleoData_pages2kID'].first()
+        missing_datasets = dataset_pages2k_map[dataset_pages2k_map.isna()].index
+
+        if len(missing_datasets) > 0:
+            print(f"\nFound {len(missing_datasets)} datasets missing paleoData_pages2kID, creating fallback IDs")
+            # Try to use datasetId or TSid pattern for fallback
+            if 'datasetId' in df.columns:
+                for dataset_name in missing_datasets:
+                    dataset_id = df[df[dataset_col] == dataset_name]['datasetId'].iloc[0]
+                    dataset_pages2k_map[dataset_name] = dataset_id
+            elif 'paleoData_TSid' in df.columns:
+                # Use first TSid from each dataset
+                for dataset_name in missing_datasets:
+                    tsid = df[df[dataset_col] == dataset_name]['paleoData_TSid'].iloc[0]
+                    dataset_pages2k_map[dataset_name] = tsid
+            else:
+                # Create sequential IDs
+                for i, dataset_name in enumerate(missing_datasets):
+                    dataset_pages2k_map[dataset_name] = f'unknown_{i}'
+
+        # Map the dataset-level IDs back to all time series
+        df['paleoData_pages2kID'] = df[dataset_col].map(dataset_pages2k_map)
     else:
-        df['paleoData_pages2kID'] = ['unknown_' + str(i) for i in range(len(df))]
+        # Column doesn't exist, create it at dataset level
+        print("\npaleoData_pages2kID column missing, creating from datasetId or dataSetName")
+        if 'datasetId' in df.columns:
+            # Use datasetId as the pages2kID
+            dataset_id_map = df.groupby(dataset_col)['datasetId'].first()
+            df['paleoData_pages2kID'] = df[dataset_col].map(dataset_id_map)
+        else:
+            # Use dataset name as the ID
+            df['paleoData_pages2kID'] = df[dataset_col]
 
 # Ensure remaining string columns are proper strings
 string_columns = [
