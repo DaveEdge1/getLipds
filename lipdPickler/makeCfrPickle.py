@@ -1,6 +1,7 @@
 import lipd
 import pickle
 import pandas as pd
+import numpy as np
 import os
 
 print("Starting cfr-compatible pickle creation")
@@ -128,6 +129,64 @@ numeric_columns = ['geo_meanLat', 'geo_meanLon', 'geo_meanElev']
 for col in numeric_columns:
     if col in df.columns:
         df[col] = pd.to_numeric(df[col], errors='coerce')
+
+# Validate paleoData_values - must be numeric arrays for cfr
+# Remove records where values cannot be converted to numeric
+if 'paleoData_values' in df.columns:
+    print(f"\nValidating paleoData_values for numeric content...")
+
+    def is_numeric_array(val):
+        """Check if value is a numeric array or can be converted to one"""
+        if pd.isna(val):
+            return False
+        try:
+            # Try to convert to numpy array of floats
+            arr = np.array(val, dtype=float)
+            # Check that we got actual numbers, not NaN
+            return len(arr) > 0 and not np.all(np.isnan(arr))
+        except (ValueError, TypeError):
+            return False
+
+    # Find records with non-numeric values
+    numeric_mask = df['paleoData_values'].apply(is_numeric_array)
+    non_numeric_count = (~numeric_mask).sum()
+
+    if non_numeric_count > 0:
+        print(f"Found {non_numeric_count} records with non-numeric paleoData_values")
+        # Show a sample of what's being dropped
+        bad_records = df[~numeric_mask].head(3)
+        for idx, row in bad_records.iterrows():
+            val_sample = str(row['paleoData_values'])[:100] if 'paleoData_values' in row else 'N/A'
+            var_name = row.get('paleoData_variableName', 'unknown')
+            dataset_name = row.get(dataset_col, 'unknown')
+            print(f"  - {dataset_name} / {var_name}: {val_sample}...")
+
+        # Drop records with non-numeric values
+        df = df[numeric_mask].copy()
+        print(f"Dropped {non_numeric_count} records with non-numeric values")
+
+# Also validate that time/age/year columns are numeric
+time_columns = ['age', 'year', 'depth']
+for col in time_columns:
+    if col in df.columns:
+        print(f"\nValidating {col} column for numeric content...")
+
+        def is_numeric_time_array(val):
+            if pd.isna(val):
+                return False
+            try:
+                arr = np.array(val, dtype=float)
+                return len(arr) > 0 and not np.all(np.isnan(arr))
+            except (ValueError, TypeError):
+                return False
+
+        time_mask = df[col].apply(is_numeric_time_array)
+        non_numeric_time_count = (~time_mask).sum()
+
+        if non_numeric_time_count > 0:
+            print(f"Found {non_numeric_time_count} records with non-numeric {col} data")
+            df = df[time_mask].copy()
+            print(f"Dropped {non_numeric_time_count} records with non-numeric {col} values")
 
 print(f"\nFinal DataFrame shape: {df.shape}")
 print(f"Total removed: {initial_count - len(df)} time series")
