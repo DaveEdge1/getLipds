@@ -212,15 +212,17 @@ pickleEm = function(path1, format){
 
 	// Determine which Python script to run based on format
 	var scriptName = 'makePickle.py';  // default legacy
-	var outputFile = 'lipd.pkl';
-
-	if (format === 'cfr') {
-		scriptName = 'makeCfrPickle.py';
-		outputFile = 'lipd_cfr.pkl';
-	}
 
 	// Build Docker command with script override
-	var dockerComm = "docker run --rm -v " + path1 + ":/output -v " + path1 + "/" + outputFile + ":/" + outputFile + " davidedge/lipd_webapps:lipdPickler " + scriptName;
+	var dockerComm;
+	if (format === 'cfr') {
+		scriptName = 'makeCfrPickle.py';
+		// CFR format writes directly to /output/, so only mount the directory
+		dockerComm = "docker run --rm -v " + path1 + ":/output davidedge/lipd_webapps:lipdPickler " + scriptName;
+	} else {
+		// Legacy format needs the lipd.pkl file mount for backward compatibility
+		dockerComm = "docker run --rm -v " + path1 + ":/output -v " + path1 + "/lipd.pkl:/lipd.pkl davidedge/lipd_webapps:lipdPickler " + scriptName;
+	}
 
 	console.log("Docker command: " + dockerComm);
 	var dockerspawn = child_process.exec(dockerComm);
