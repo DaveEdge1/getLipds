@@ -112,9 +112,9 @@ var updateTSIDmd5 = async function (){
 }
 
 var checkmd5 = async function (uniqueID){
-	var path99 = path.join(__dirname, '../userRecons', uniqueID)
+	var path99 = path.join('/root/presto/userRecons', uniqueID)
 	var path9 = path.join(__dirname, '/checkTSIDmd5.R')
-	var path9999 = path.join(__dirname, '../userRecons', uniqueID, 'TSIDs.json')
+	var path9999 = path.join('/root/presto/userRecons', uniqueID, 'TSIDs.json')
 	const exists1 = await checkFileExistsSync(path9999)
 	if (!exists1){
 		console.log("no TSIDs.json file in directory: " + uniqueID)
@@ -154,7 +154,7 @@ async function newStatus(uniqueID, language){
 	}
 	await checkmd5(uniqueID)
 	console.log("md5 checked")
-	var path999 = path.join(__dirname, '../userRecons', uniqueID, '/pointer.txt')
+	var path999 = path.join('/root/presto/userRecons', uniqueID, '/pointer.txt')
 	const exists1 = await checkFileExistsSync(path999)
 	if (exists1){
 		console.log("matching TSIDs file exists")
@@ -166,7 +166,7 @@ async function newStatus(uniqueID, language){
 }
 
 var rspawn1 = function (TSIDs, uniqueID, language){
-	var path1 = path.join(__dirname, '../userRecons', uniqueID)
+	var path1 = path.join('/root/presto/userRecons', uniqueID)
 
 	var path3 = path.join(path1, "lipd.pkl")
 	fs.writeFile(path3, " ", (err) => {
@@ -388,7 +388,7 @@ async function downloadCompilation(uniqueID, URL, language) {
 var downloadEm = async function(uniqueID, language, format){
 	// Default to legacy format if not specified
 	format = format || 'legacy';
-	const userDir1 = path.join(__dirname, '../userRecons', uniqueID)
+	const userDir1 = path.join('/root/presto/userRecons', uniqueID)
 	const path1111 = path.join(userDir1, 'archivedComp.json')
 	const exists1111 = await checkFileExistsSync(path1111)
 
@@ -427,14 +427,14 @@ var downloadEm = async function(uniqueID, language, format){
 		}
 		if (runStatus == 1){
 			console.log("no matching TSIDs set, building new collection")
-			var path1 = path.join(__dirname, '../userRecons', uniqueID, 'TSIDs.json')
+			var path1 = path.join('/root/presto/userRecons', uniqueID, 'TSIDs.json')
 
 			var fullJSON = JSON.parse(TSIDs(path1, uniqueID))
 			rspawn1(fullJSON.TSIDs, uniqueID, language).then(reso => {
 					console.log("rspawn1 reso: " + reso)
 					console.log("rspawn1 language: " + language)
    					//if (reso == 0 && language == "Python"){
-					var pathToPkl = path.join(__dirname, '../userRecons', uniqueID)
+					var pathToPkl = path.join('/root/presto/userRecons', uniqueID)
 					console.log("attempting pickle with format: " + format)
 					pickleEm(pathToPkl, format).then(reso => {
 						removeEm(pathToPkl).then(reso => {
