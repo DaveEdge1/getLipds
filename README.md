@@ -44,12 +44,14 @@ Depending on the parameters, the following files are generated in `/root/presto/
 ### For Python (`language=Python`):
 - **Legacy format** (`format=legacy` or unspecified):
   - `lipd.pkl` - Dictionary with structure `{'D': D}`
+  - `lipd_files.zip` - Archive of all .lpd files
   - `lipd.rds` - R serialized data
   - `lipd_tts.rds` - R time series table
 
 - **CFR format** (`format=cfr`):
   - `lipd_cfr.pkl` - pandas DataFrame compatible with cfr library
   - `lipd.pkl` - Legacy format (for backward compatibility)
+  - `lipd_files.zip` - Archive of all .lpd files
   - `lipd.rds` - R serialized data
   - `lipd_tts.rds` - R time series table
 

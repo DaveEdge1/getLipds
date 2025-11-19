@@ -10,18 +10,23 @@
 
 ### Legacy Format (default)
 - **Script**: `makePickle.py`
-- **Output**: `lipd.pkl`
+- **Output**:
+  - `lipd.pkl` - Python pickle file
+  - `lipd_files.zip` - Archive of all .lpd files
 - **Structure**: Dictionary with `{'D': D}` where D is from `lipd.readLipd()`
 - **Protocol**: pickle protocol 2 (Python 2.x compatible)
 - **Usage**: `docker run -v /path/to/output:/output -v /path/to/output/lipd.pkl:/lipd.pkl davidedge/lipd_webapps:lipdPickler`
 
 ### CFR Format (cfr-compatible)
 - **Script**: `makeCfrPickle.py`
-- **Output**: `lipd_cfr.pkl` (also creates `lipd.pkl` for backward compatibility)
+- **Output**:
+  - `lipd_cfr.pkl` - CFR-compatible pandas DataFrame
+  - `lipd.pkl` - Legacy format (for backward compatibility)
+  - `lipd_files.zip` - Archive of all .lpd files
 - **Structure**: pandas DataFrame with columns compatible with [cfr](https://github.com/fzhu2e/cfr) library
 - **Protocol**: pickle protocol 4 (Python 3.4+)
 - **Columns**: paleoData_TSid, dataSetName, archiveType, geo_meanLat, geo_meanLon, geo_meanElev, year/age, yearUnits, paleoData_variableName, paleoData_units, paleoData_values, paleoData_proxy
-- **Usage**: `docker run -v /path/to/output:/output -v /path/to/output/lipd_cfr.pkl:/lipd_cfr.pkl davidedge/lipd_webapps:lipdPickler makeCfrPickle.py`
+- **Usage**: `docker run -v /path/to/output:/output davidedge/lipd_webapps:lipdPickler makeCfrPickle.py`
 
 ## Examples
 
