@@ -8,17 +8,8 @@ print(os.getcwd())
 print(os.path.isfile('/lipd.pkl'))
 
 D = lipd.readLipd("/output/")
-TS = lipd.extractTs(D)
-all_data = {}
-all_data['D'] = D
 
-filetosave = open('/output/lipd.pkl','wb')
-
-pickle.dump(all_data, filetosave, protocol = 2)
-
-filetosave.close()
-
-# Create zip file of all .lpd files before they're deleted
+# Create zip file of all .lpd files FIRST (before any processing that might fail)
 print("Creating zip archive of .lpd files...")
 lpd_files = glob.glob("/output/*.lpd")
 
@@ -33,3 +24,16 @@ if lpd_files:
     print(f"Successfully created {zip_path} with {len(lpd_files)} .lpd files")
 else:
     print("No .lpd files found to archive")
+
+TS = lipd.extractTs(D)
+all_data = {}
+all_data['D'] = D
+
+filetosave = open('/output/lipd.pkl','wb')
+
+pickle.dump(all_data, filetosave, protocol = 2)
+
+filetosave.close()
+
+print("Successfully saved pickle to /output/lipd.pkl")
+print("All files created successfully!")
