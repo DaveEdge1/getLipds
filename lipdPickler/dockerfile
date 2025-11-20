@@ -10,6 +10,6 @@ SHELL ["conda", "run", "-n", "python3_nc", "/bin/bash", "-c"]
 
 ENTRYPOINT ["conda", "run", "--no-capture-output", "-n", "python3_nc", "python"]
 
-CMD ["makePickle.py"]
+CMD ["makeCfrPickle.py"]
 
 
