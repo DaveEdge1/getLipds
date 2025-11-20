@@ -219,20 +219,20 @@ print(f"Total removed: {initial_count - len(df)} time series")
 print(f"Final datasets: {df[dataset_col].nunique() if dataset_col in df.columns else 'unknown'}")
 print(f"Data types:\n{df.dtypes}")
 
-# Save as cfr-compatible pickle
-output_file = '/output/lipd_cfr.pkl'
+# Save as cfr-compatible pickle (primary format)
+output_file = '/output/lipd.pkl'
 with open(output_file, 'wb') as f:
     pickle.dump(df, f, protocol=4)  # Use protocol 4 for Python 3.4+ compatibility
 
-print(f"Successfully saved cfr-compatible pickle to {output_file}")
+print(f"\nSuccessfully saved cfr-compatible pickle to {output_file}")
 
-# Also save the traditional format for backward compatibility
+# Also save the legacy format for backward compatibility
 all_data = {}
 all_data['D'] = D
 
-traditional_file = '/output/lipd.pkl'
-with open(traditional_file, 'wb') as f:
+legacy_file = '/output/lipd_legacy.pkl'
+with open(legacy_file, 'wb') as f:
     pickle.dump(all_data, f, protocol=2)
 
-print(f"Successfully saved traditional pickle to {traditional_file}")
+print(f"Successfully saved legacy pickle to {legacy_file}")
 print("\nAll files created successfully!")
