@@ -13,9 +13,25 @@ print(os.path.isfile('/lipd.pkl'))
 # Read LiPD files
 D = lipd.readLipd("/output/")
 
+# Create zip file of all .lpd files FIRST (before any processing that might fail)
+print("\nCreating zip archive of .lpd files...")
+lpd_files = glob.glob("/output/*.lpd")
+
+if lpd_files:
+    zip_path = '/output/lipd_files.zip'
+    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for lpd_file in lpd_files:
+            # Add file to zip with just the filename (not full path)
+            arcname = os.path.basename(lpd_file)
+            zipf.write(lpd_file, arcname)
+            print(f"  Added {arcname} to archive")
+    print(f"Successfully created {zip_path} with {len(lpd_files)} .lpd files")
+else:
+    print("No .lpd files found to archive")
+
 # Extract time series objects
 TS = lipd.extractTs(D)
-print(f"Extracted {len(TS)} time series objects")
+print(f"\nExtracted {len(TS)} time series objects")
 
 # Convert TSO list to DataFrame
 # Each TSO is a flattened dictionary with all metadata
@@ -139,8 +155,12 @@ if 'paleoData_values' in df.columns:
 
     def is_numeric_array(val):
         """Check if value is a numeric array or can be converted to one"""
-        if pd.isna(val):
+        # Check for None or scalar NaN
+        if val is None:
             return False
+        # For scalars, use pd.isna
+        if np.isscalar(val):
+            return not pd.isna(val)
         try:
             # Try to convert to numpy array of floats
             arr = np.array(val, dtype=float)
@@ -174,8 +194,12 @@ for col in time_columns:
         print(f"\nValidating {col} column for numeric content...")
 
         def is_numeric_time_array(val):
-            if pd.isna(val):
+            # Check for None or scalar NaN
+            if val is None:
                 return False
+            # For scalars, use pd.isna
+            if np.isscalar(val):
+                return not pd.isna(val)
             try:
                 arr = np.array(val, dtype=float)
                 return len(arr) > 0 and not np.all(np.isnan(arr))
@@ -211,19 +235,4 @@ with open(traditional_file, 'wb') as f:
     pickle.dump(all_data, f, protocol=2)
 
 print(f"Successfully saved traditional pickle to {traditional_file}")
-
-# Create zip file of all .lpd files before they're deleted
-print("\nCreating zip archive of .lpd files...")
-lpd_files = glob.glob("/output/*.lpd")
-
-if lpd_files:
-    zip_path = '/output/lipd_files.zip'
-    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-        for lpd_file in lpd_files:
-            # Add file to zip with just the filename (not full path)
-            arcname = os.path.basename(lpd_file)
-            zipf.write(lpd_file, arcname)
-            print(f"  Added {arcname} to archive")
-    print(f"Successfully created {zip_path} with {len(lpd_files)} .lpd files")
-else:
-    print("No .lpd files found to archive")
+print("\nAll files created successfully!")

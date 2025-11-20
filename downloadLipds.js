@@ -439,10 +439,23 @@ var downloadEm = async function(uniqueID, language, format){
 					var pathToPkl = path.join('/root/presto/userRecons', uniqueID)
 					console.log("attempting pickle with format: " + format)
 					pickleEm(pathToPkl, format).then(reso => {
-						removeEm(pathToPkl).then(reso => {
-							console.log("downloadLipds.js successful, new lipd set created")
-							process.exit(0);
-						});
+						console.log("pickleEm exit code: " + reso)
+						if (reso == 0) {
+							// Only remove .lpd files if pickle creation succeeded
+							removeEm(pathToPkl).then(reso => {
+								console.log("downloadLipds.js successful, new lipd set created")
+								process.exit(0);
+							});
+						} else {
+							console.log("ERROR: pickleEm failed with code " + reso)
+							console.log("Preserving .lpd files for debugging")
+							console.log("lipd_files.zip should still be available")
+							process.exit(1);
+						}
+					}).catch(err => {
+						console.log("ERROR: pickleEm failed with error: " + err)
+						console.log("Preserving .lpd files for debugging")
+						process.exit(1);
 					})
 			});
 
